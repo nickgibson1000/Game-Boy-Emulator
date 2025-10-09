@@ -138,7 +138,6 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     for(int i = 0; i < sizeof(checksum_buffer); i++)
     {
 
-        //checksum += checksum_buffer[i];
         checksum = checksum - checksum_buffer[i] - 1;
         fprintf(stdout, "%02X ", checksum_buffer[i]);
     }
@@ -146,14 +145,14 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     printf("\n");
     
 
-    //checksum -= 0x95;
     // DEBUG: Print checksum
-    fprintf(stdout, "\n%02X \n", checksum);
+    //fprintf(stdout, "\n%02X \n", checksum);
 
     // Read the actual checksum byte from ROM
     uint8_t stored_checksum;
     fread(&stored_checksum, 1, 1, cartridge);
-    fprintf(stdout, "%02x", stored_checksum);
+    
+    //fprintf(stdout, "%02x", stored_checksum);
 
     if(checksum != stored_checksum)
     {
@@ -164,15 +163,6 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     {
         fprintf(stdout, "Checksum OK.\n");
     }
-
-
-
-
-
-
-
-
-
 
 
     // LD A, $01
