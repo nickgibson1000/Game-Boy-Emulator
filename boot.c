@@ -18,8 +18,8 @@ void *initialize(FILE* cartridge)
 
 
 /*
- The boot sequence in the LR25902 Game Boy CPU is an unskipable 256 bytes ROM,
- that intializes hardware, displays the Nintendo logo with a sounds and verifies the
+ The boot sequence in the LR35902 Game Boy CPU is an unskipable 256 bytes ROM,
+ that intializes hardware, displays the Nintendo logo with a sound and verifies the
  inserted cartridge.
 */
 int boot_sequence(void *CPU_HANDLE, FILE* cartridge) 
@@ -77,17 +77,17 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     }
 
     // Holds the catridge header
-    uint8_t buffer[48];
+    uint8_t logo_buffer[48];
 
-    size_t bytes_to_read = sizeof(buffer); 
-    size_t bytes_read = fread(buffer, 1, bytes_to_read, cartridge);
+    size_t bytes_to_read = sizeof(logo_buffer); 
+    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge);
 
 
     if (bytes_read < bytes_to_read) 
     {
         if (feof(cartridge)) 
         {
-            fprintf(stderr,"Stopped reading cartrdige header prematurely.\n");
+            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
         } 
         else if (ferror(cartridge)) 
         {
@@ -96,18 +96,79 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     }
 
     // Compare the header of the cartridge with the systems expected header
-    for(int i = 0; i < sizeof(buffer); i++)
+    for(int i = 0; i < sizeof(logo_buffer); i++)
     {
-        if(buffer[i] != logo[i])
+        if(logo_buffer[i] != logo[i])
         {
             fprintf(stderr, "Mismatch in header bytes at byte %d\n", i);
-            fprintf(stderr, "Cartridge: %x\n", buffer[i]);
+            fprintf(stderr, "Cartridge: %x\n",logo_buffer[i]);
             fprintf(stderr, "System: %x\n", logo[i]);
             return 1;
         }
     }
 
-    fprintf(stdout, "Headers Match.\n");
+    fprintf(stdout, "Header OK.\n");
+
+    /*
+    Todo: Compare checksums
+    
+    */
+
+    // Checksum is from 0x0134 - 0x014C (24 bytes)
+    uint8_t checksum_buffer[25];
+
+    bytes_to_read = sizeof(checksum_buffer); 
+    bytes_read = fread(checksum_buffer, 1, bytes_to_read, cartridge);
+
+    if (bytes_read < bytes_to_read) 
+    {
+        if (feof(cartridge)) 
+        {
+            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
+        } 
+        else if (ferror(cartridge)) 
+        {
+            fprintf(stderr, "Error reading cartridge header.\n");
+        }
+    }
+
+    uint8_t checksum = 0;
+
+    // Compare the checksum of the cartridge with the systems expected checksum
+    for(int i = 0; i < sizeof(checksum_buffer); i++)
+    {
+
+        //checksum += checksum_buffer[i];
+        checksum = checksum - checksum_buffer[i] - 1;
+        fprintf(stdout, "%02X ", checksum_buffer[i]);
+    }
+
+    printf("\n");
+    
+
+    //checksum -= 0x95;
+    // DEBUG: Print checksum
+    fprintf(stdout, "\n%02X \n", checksum);
+
+    // Read the actual checksum byte from ROM
+    uint8_t stored_checksum;
+    fread(&stored_checksum, 1, 1, cartridge);
+    fprintf(stdout, "%02x", stored_checksum);
+
+    if(checksum != stored_checksum)
+    {
+        fprintf(stderr, "Checksum BAD.\n");
+        return 1;
+    }
+    else
+    {
+        fprintf(stdout, "Checksum OK.\n");
+    }
+
+
+
+
+
 
 
 
