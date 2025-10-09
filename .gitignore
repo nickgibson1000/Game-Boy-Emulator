@@ -1,0 +1,36 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+*.bin
+
+# Libraries
+*.lib
+*.a
+*.so
+*.dll
+
+# Debugging files
+*.pdb
+*.ilk
+
+# Build directories
+build/
+bin/
+obj/
+Debug/
+Release/
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.swp  # Vim swap files
+*~     # Emacs backup files
+*.bak  # Generic backup files
+
+# Operating System generated files
+.DS_Store
+Thumbs.db
