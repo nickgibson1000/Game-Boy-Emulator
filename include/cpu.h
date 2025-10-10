@@ -13,7 +13,8 @@ typedef struct {
 } cpu_t;
 
 void *initialize();
-int boot_sequence(void *CPU, FILE* cartridge);
+int boot_sequence(void* CPU, FILE* cartridge);
+void write_io_register(void* CPU, uint16_t address, uint8_t value);
 
 
 #endif // CPU_H

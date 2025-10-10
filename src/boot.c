@@ -8,7 +8,7 @@ void *initialize(FILE* cartridge)
     {
         fprintf(stderr, "ERROR: NULL handle \n");
         exit(-1);
-    }
+    } 
 
     // Intialize everything in the struct to 0
     memset(CPU, 0, sizeof(cpu_t));
@@ -39,6 +39,33 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     {
         CPU->memory[i] = 0;
     }
+
+
+    // Setup Audio
+
+    CPU->C = 0x11;
+    CPU->A = 0x80;
+
+    CPU->memory[0xFF26] = CPU->A;
+    CPU->memory[0xFF00 + CPU->C] = CPU->A;
+
+    CPU->C++;
+    CPU->A = 0xF3;
+    
+    CPU->memory[0xFF00 + CPU->C] = CPU->A;
+    CPU->memory[0xFF25] = CPU->A;
+
+    CPU->A = 0x77;
+    CPU->memory[0xFF24] = CPU->A;
+
+
+    // Set up BGP (Background Pallet Register)
+
+    CPU->A = 0xFC;
+    CPU->memory[0xFF47] = CPU->A;
+
+
+
 
 
     // Nintendo logo bitmap
@@ -107,12 +134,10 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
         }
     }
 
+    
+
     fprintf(stdout, "Header OK.\n");
 
-    /*
-    Todo: Compare checksums
-    
-    */
 
     // Checksum is from 0x0134 - 0x014C (24 bytes)
     uint8_t checksum_buffer[25];
@@ -149,12 +174,13 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     //fprintf(stdout, "\n%02X \n", checksum);
 
     // Read the actual checksum byte from ROM
-    uint8_t stored_checksum;
-    fread(&stored_checksum, 1, 1, cartridge);
+    uint8_t expected_checksum;
+    fread(&expected_checksum, 1, 1, cartridge);
     
+    // DEBUG: Print the expected checksum value
     //fprintf(stdout, "%02x", stored_checksum);
 
-    if(checksum != stored_checksum)
+    if(checksum != expected_checksum)
     {
         fprintf(stderr, "Checksum BAD.\n");
         return 1;
@@ -164,8 +190,18 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
         fprintf(stdout, "Checksum OK.\n");
     }
 
-
     // LD A, $01
     CPU->A = 1;
-    CPU->memory[0xFF50] = CPU->A; // Set value telling hardware to disable boot ROM
+    CPU->memory[0xFF50] = CPU->A; // Disable boot ROM
+}
+
+
+
+void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
+{
+
+    cpu_t *CPU = (cpu_t*) CPU_HANDLE;
+
+
+
 }
