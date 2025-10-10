@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "audio.h"
 
 typedef struct {
     uint8_t A, F, B, C, D, E, H, L;
@@ -12,9 +13,9 @@ typedef struct {
     uint8_t memory[0x10000]; // 64KB
 } cpu_t;
 
-void *initialize();
-int boot_sequence(void* CPU, FILE* cartridge);
-void write_io_register(void* CPU, uint16_t address, uint8_t value);
+void* initialize_CPU();
+int boot_sequence(void* CPU, void* cartridge);
+void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value);
 
 
 #endif // CPU_H

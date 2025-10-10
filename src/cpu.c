@@ -1,9 +1,10 @@
 #include "../include/cpu.h"
+#include "../include/cartridge.h"
 
 
-void *initialize(FILE* cartridge)
-{
-    cpu_t *CPU = malloc(sizeof(cpu_t));
+void* initialize_CPU()
+{                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+    cpu_t* CPU = malloc(sizeof(cpu_t));
     if(CPU == NULL)
     {
         fprintf(stderr, "ERROR: NULL handle \n");
@@ -13,7 +14,7 @@ void *initialize(FILE* cartridge)
     // Intialize everything in the struct to 0
     memset(CPU, 0, sizeof(cpu_t));
 
-    return (void *)CPU;
+    return (void*)CPU;
 }
 
 
@@ -22,10 +23,11 @@ void *initialize(FILE* cartridge)
  that intializes hardware, displays the Nintendo logo with a sound and verifies the
  inserted cartridge.
 */
-int boot_sequence(void *CPU_HANDLE, FILE* cartridge) 
+int boot_sequence(void *CPU_HANDLE, void* cartridge) 
 {
     
-    cpu_t *CPU = (cpu_t*) CPU_HANDLE;
+    cpu_t* CPU = (cpu_t*) CPU_HANDLE;
+    cartridge_t* cartridge = (cartridge_t*) cartridge;
 
 
     // Set our program counter to memory address 0x00
@@ -46,7 +48,8 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     CPU->C = 0x11;
     CPU->A = 0x80;
 
-    CPU->memory[0xFF26] = CPU->A;
+    write_io_register((void*)CPU, 0xFF26, CPU->A);
+    
     CPU->memory[0xFF00 + CPU->C] = CPU->A;
 
     CPU->C++;
@@ -100,7 +103,7 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
     if(result != 0)
     {
         fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
-        return 1;
+        exit(-1);
     }
 
     // Holds the catridge header
@@ -130,7 +133,7 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
             fprintf(stderr, "Mismatch in header bytes at byte %d\n", i);
             fprintf(stderr, "Cartridge: %x\n",logo_buffer[i]);
             fprintf(stderr, "System: %x\n", logo[i]);
-            return 1;
+            exit(-1);
         }
     }
 
@@ -155,6 +158,7 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
         {
             fprintf(stderr, "Error reading cartridge header.\n");
         }
+        exit(-1);
     }
 
     uint8_t checksum = 0;
@@ -197,11 +201,31 @@ int boot_sequence(void *CPU_HANDLE, FILE* cartridge)
 
 
 
+
+
+// IO registers are from 0xFF00 - 0xFF7F
 void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
 {
+    switch(address)
+    {
+        case 0xFF11:
+            write_audio_registers(CPU_HANDLE, address, value);
+            break;
+        case 0xFF12:
+            write_audio_registers(CPU_HANDLE, address, value);
+            break;
+        case 0xFF03:
+            write_audio_registers(CPU_HANDLE, address, value);
+            break;
+        case 0xFF25:
+            write_audio_registers(CPU_HANDLE, address, value);
+            break;
+        case 0xFF26:
+            write_audio_registers(CPU_HANDLE, address, value);
+            break;
 
-    cpu_t *CPU = (cpu_t*) CPU_HANDLE;
-
-
-
+        default:
+            fprintf(stderr, "Unkown Register at Address: %02x \n", address);
+            exit(-1);
+    }
 }

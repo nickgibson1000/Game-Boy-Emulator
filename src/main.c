@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "../include/cpu.h"
+#include "../include/cartridge.h"
 
 
 
@@ -20,8 +21,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    void *CPU = initialize();
-    boot_sequence(CPU, file);
+    void* CPU = initialize_CPU();
+    void* cartridge = intialize_cartridge(file);
+    boot_sequence(CPU, cartridge);
 
 
     return 0;
