@@ -14,7 +14,7 @@ typedef struct {
 } cpu_t;
 
 void* initialize_CPU();
-int boot_sequence(void* CPU, void* cartridge);
+int boot_sequence(void* CPU_HANDLE, void* CARTRIDGE_HANDLE);
 void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value);
 
 

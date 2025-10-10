@@ -23,11 +23,11 @@ void* initialize_CPU()
  that intializes hardware, displays the Nintendo logo with a sound and verifies the
  inserted cartridge.
 */
-int boot_sequence(void *CPU_HANDLE, void* cartridge) 
+int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE) 
 {
     
     cpu_t* CPU = (cpu_t*) CPU_HANDLE;
-    cartridge_t* cartridge = (cartridge_t*) cartridge;
+    cartridge_t* cartridge = (cartridge_t*) CARTRIDGE_HANDLE;
 
 
     // Set our program counter to memory address 0x00
@@ -98,7 +98,7 @@ int boot_sequence(void *CPU_HANDLE, void* cartridge)
 
     // Jump to the start of the cartridge header
     uint16_t offset = 0x0104;
-    int result = fseek(cartridge, offset, SEEK_SET);
+    int result = fseek(cartridge->file, offset, SEEK_SET);
 
     if(result != 0)
     {
@@ -110,16 +110,16 @@ int boot_sequence(void *CPU_HANDLE, void* cartridge)
     uint8_t logo_buffer[48];
 
     size_t bytes_to_read = sizeof(logo_buffer); 
-    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge);
+    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge->file);
 
 
     if (bytes_read < bytes_to_read) 
     {
-        if (feof(cartridge)) 
+        if (feof(cartridge->file)) 
         {
             fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
         } 
-        else if (ferror(cartridge)) 
+        else if (ferror(cartridge->file)) 
         {
             fprintf(stderr, "Error reading cartridge header.\n");
         }
@@ -146,15 +146,15 @@ int boot_sequence(void *CPU_HANDLE, void* cartridge)
     uint8_t checksum_buffer[25];
 
     bytes_to_read = sizeof(checksum_buffer); 
-    bytes_read = fread(checksum_buffer, 1, bytes_to_read, cartridge);
+    bytes_read = fread(checksum_buffer, 1, bytes_to_read, cartridge->file);
 
     if (bytes_read < bytes_to_read) 
     {
-        if (feof(cartridge)) 
+        if (feof(cartridge->file)) 
         {
             fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
         } 
-        else if (ferror(cartridge)) 
+        else if (ferror(cartridge->file)) 
         {
             fprintf(stderr, "Error reading cartridge header.\n");
         }
@@ -179,7 +179,7 @@ int boot_sequence(void *CPU_HANDLE, void* cartridge)
 
     // Read the actual checksum byte from ROM
     uint8_t expected_checksum;
-    fread(&expected_checksum, 1, 1, cartridge);
+    fread(&expected_checksum, 1, 1, cartridge->file);
     
     // DEBUG: Print the expected checksum value
     //fprintf(stdout, "%02x", stored_checksum);
