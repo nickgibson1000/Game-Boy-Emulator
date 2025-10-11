@@ -49,18 +49,17 @@ int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE)
     CPU->A = 0x80;
 
     write_io_register((void*)CPU, 0xFF26, CPU->A);
-    
-    CPU->memory[0xFF00 + CPU->C] = CPU->A;
+    write_io_register((void*)CPU, 0xFF00 + CPU->C, CPU->A);
 
     CPU->C++;
     CPU->A = 0xF3;
     
-    CPU->memory[0xFF00 + CPU->C] = CPU->A;
-    CPU->memory[0xFF25] = CPU->A;
+    write_io_register((void*)CPU, 0xFF00 + CPU->C, CPU->A);
+    write_io_register((void*)CPU, 0xFF25, CPU->A);
 
     CPU->A = 0x77;
-    CPU->memory[0xFF24] = CPU->A;
 
+    write_io_register((void*)CPU, 0xFF24, CPU->A);
 
     // Set up BGP (Background Pallet Register)
 
@@ -208,20 +207,161 @@ void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
 {
     switch(address)
     {
+        case 0xFF00:        
+            break;
+        case 0xFF01:          
+            break;
+        case 0xFF02:
+            break;
+        case 0xFF04:
+            break;
+        case 0xFF05:
+            break;
+        case 0xFF06:
+            break;
+        case 0xFF07:
+            break;    
+        case 0xFF0F:
+            break;
+        case 0xFF10:
+            break;
         case 0xFF11:
             write_audio_registers(CPU_HANDLE, address, value);
             break;
         case 0xFF12:
             write_audio_registers(CPU_HANDLE, address, value);
             break;
-        case 0xFF03:
-            write_audio_registers(CPU_HANDLE, address, value);
+        case 0xFF13:
+            break;
+        case 0xFF14:
+            break;
+        case 0xFF16:
+            break;
+        case 0xFF17:
+            break;
+        case 0xFF18:
+            break;
+        case 0xFF19:
+            break;
+        case 0xFF1A:
+            break;
+        case 0xFF1B:
+            break;
+        case 0xFF1C:
+            break;
+        case 0xFF1D:
+            break;
+        case 0xFF1E:
+            break;
+        case 0xFF20:
+            break;
+        case 0xFF21:
+            break;
+        case 0xFF22:
+            break;
+        case 0xFF23:
+            break;
+        case 0xFF24:
             break;
         case 0xFF25:
             write_audio_registers(CPU_HANDLE, address, value);
             break;
         case 0xFF26:
             write_audio_registers(CPU_HANDLE, address, value);
+            break;
+        case 0xFF30:
+            break;
+        case 0xFF31:
+            break;
+        case 0xFF32:
+            break;
+        case 0xFF33:
+            break;
+        case 0xFF34:
+            break;
+        case 0xFF35:
+            break;
+        case 0xFF36:
+            break;
+        case 0xFF37:
+            break;
+        case 0xFF38:
+            break;
+        case 0xFF39:
+            break;
+        case 0xFF3A:
+            break;
+        case 0xFF3B:
+            break;
+        case 0xFF3C:
+            break;
+        case 0xFF3D:
+            break;
+        case 0xFF3E:
+            break;
+        case 0xFF3F:
+            break;
+        case 0xFF40:
+            break;
+        case 0xFF41:
+            break;
+        case 0xFF42:
+            break;
+        case 0xFF43:
+            break;
+        case 0xFF44:
+            break;
+        case 0xFF45:
+            break;
+        case 0xFF46:
+            break;
+        case 0xFF47:
+            break;
+        case 0xFF48:
+            break;
+        case 0xFF49:
+            break;
+        case 0xFF4A:
+            break;
+        case 0xFF4B:
+            break;
+        case 0xFF4C:
+            break;
+        case 0xFF4D:
+            break;
+        case 0xFF4F:
+            break;
+        case 0xFF50:
+            break;
+        case 0xFF51:
+            break;
+        case 0xFF52:
+            break;
+        case 0xFF53:
+            break;
+        case 0xFF54:
+            break;
+        case 0xFF55:
+            break;
+        case 0xFF56:
+            break;
+        case 0xFF68:
+            break;
+        case 0xFF69:
+            break;
+        case 0xFF6A:
+            break;
+        case 0xFF6B:
+            break;
+        case 0xFF6C:
+            break;
+        case 0xFF70:
+            break;
+        case 0xFF76:
+            break;
+        case 0xFF77:
+            break;
+        case 0xFFFF:
             break;
 
         default:
