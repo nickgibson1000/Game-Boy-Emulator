@@ -1,6 +1,6 @@
 #include "../include/cartridge.h"
 
-void* intialize_cartridge(FILE* cartridge_file)
+cartridge_t* intialize_cartridge(FILE* cartridge_file)
 {
     cartridge_t* cartridge = malloc(sizeof(cartridge_t));
     if(cartridge == NULL)
@@ -14,5 +14,5 @@ void* intialize_cartridge(FILE* cartridge_file)
 
     cartridge->file = cartridge_file;
 
-    return (void*)cartridge;
+    return cartridge;
 }

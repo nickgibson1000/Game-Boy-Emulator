@@ -2,7 +2,7 @@
 #include "../include/cartridge.h"
 
 
-void* initialize_CPU()
+cpu_t* initialize_CPU()
 {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
     cpu_t* CPU = malloc(sizeof(cpu_t));
     if(CPU == NULL)
@@ -14,7 +14,7 @@ void* initialize_CPU()
     // Intialize everything in the struct to 0
     memset(CPU, 0, sizeof(cpu_t));
 
-    return (void*)CPU;
+    return CPU;
 }
 
 
@@ -23,13 +23,9 @@ void* initialize_CPU()
  that intializes hardware, displays the Nintendo logo with a sound and verifies the
  inserted cartridge.
 */
-int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE) 
+int boot_sequence(cpu_t* CPU, cartridge_t* cartridge) 
 {
     
-    cpu_t* CPU = (cpu_t*) CPU_HANDLE;
-    cartridge_t* cartridge = (cartridge_t*) CARTRIDGE_HANDLE;
-
-
     // Set our program counter to memory address 0x00
     CPU->PC = 0x0100; // Execution starts here
     CPU->SP = 0xFFFE; // Top of stack
@@ -48,24 +44,34 @@ int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE)
     CPU->C = 0x11;
     CPU->A = 0x80;
 
-    write_io_register((void*)CPU, 0xFF26, CPU->A);
-    write_io_register((void*)CPU, 0xFF00 + CPU->C, CPU->A);
+    write_io_register(CPU, 0xFF26, CPU->A);
+    write_io_register(CPU, 0xFF00 + CPU->C, CPU->A);
 
     CPU->C++;
     CPU->A = 0xF3;
     
-    write_io_register((void*)CPU, 0xFF00 + CPU->C, CPU->A);
-    write_io_register((void*)CPU, 0xFF25, CPU->A);
+    write_io_register(CPU, 0xFF00 + CPU->C, CPU->A);
+    write_io_register(CPU, 0xFF25, CPU->A);
 
     CPU->A = 0x77;
 
-    write_io_register((void*)CPU, 0xFF24, CPU->A);
+    write_io_register(CPU, 0xFF24, CPU->A);
+
+
 
     // Set up BGP (Background Pallet Register)
 
     CPU->A = 0xFC;
-    CPU->memory[0xFF47] = CPU->A;
+    write_io_register(CPU, 0xFF47, CPU->A);
 
+
+    // Load the nintendo logo in the cartridge header into the game boys VRAM
+    // We do these same few lines a little later in this boot sequence.
+    // We could easily combine them for simplicity but to maintain
+    // high emualtion accuracy, we will keep them seperate for now
+    load_logo_to_VRAM(CPU, cartridge);
+
+    
 
 
 
@@ -81,6 +87,10 @@ int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE)
     };
 
     // Load the bitmap into memory  0x00a8 -> 0x00d7
+    // Note that this does NOT load the logo into the VRAM section of memory
+    // This is loaded here to be used for the logo comparison routine
+    // This bitmap is also loaded into VRAM earlier on in the boot ROM
+    // by pointing to the logo data in the CARTRIDGE header and loading it that way.
     memcpy(&CPU->memory[0xa8], logo, 48);
 
 
@@ -196,14 +206,17 @@ int boot_sequence(void *CPU_HANDLE, void* CARTRIDGE_HANDLE)
     // LD A, $01
     CPU->A = 1;
     CPU->memory[0xFF50] = CPU->A; // Disable boot ROM
+
+    return 0;
 }
 
 
 
 
 
+
 // IO registers are from 0xFF00 - 0xFF7F
-void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
+void write_io_register(cpu_t* CPU, uint16_t address, uint8_t value)
 {
     switch(address)
     {
@@ -226,10 +239,10 @@ void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
         case 0xFF10:
             break;
         case 0xFF11:
-            write_audio_registers(CPU_HANDLE, address, value);
+            write_audio_registers(CPU, address, value);
             break;
         case 0xFF12:
-            write_audio_registers(CPU_HANDLE, address, value);
+            write_audio_registers(CPU, address, value);
             break;
         case 0xFF13:
             break;
@@ -264,10 +277,10 @@ void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
         case 0xFF24:
             break;
         case 0xFF25:
-            write_audio_registers(CPU_HANDLE, address, value);
+            write_audio_registers(CPU, address, value);
             break;
         case 0xFF26:
-            write_audio_registers(CPU_HANDLE, address, value);
+            write_audio_registers(CPU, address, value);
             break;
         case 0xFF30:
             break;
@@ -315,7 +328,8 @@ void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
             break;
         case 0xFF46:
             break;
-        case 0xFF47:
+        case 0xFF47: // BG color palette register
+            update_bg_palette_reg(CPU, address, value);
             break;
         case 0xFF48:
             break;
@@ -368,4 +382,22 @@ void write_io_register(void* CPU_HANDLE, uint16_t address, uint8_t value)
             fprintf(stderr, "Unkown Register at Address: %02x \n", address);
             exit(-1);
     }
+}
+
+
+void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
+{
+    
+    CPU->memory[address] = value;
+
+    // Decode 2-bit mapping
+    CPU->bg_palette_mapping[0] = value & 0x03;
+    CPU->bg_palette_mapping[1] = (value >> 2) & 0x03;
+    CPU->bg_palette_mapping[2] = (value >> 4) & 0x03;
+    CPU->bg_palette_mapping[3] = (value >> 6) & 0x03;
+}
+
+void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
+{
+    
 }

@@ -14,6 +14,6 @@ typedef struct {
     uint8_t memory[0x8000]; // 32KB (RIGHT NOW WE ASSUME NO BANK SWITCHING)
 } cartridge_t;
 
-void* intialize_cartridge(FILE* cartridge_file);
+cartridge_t* intialize_cartridge(FILE* cartridge_file);
 
 #endif // CARTRIDGE_H

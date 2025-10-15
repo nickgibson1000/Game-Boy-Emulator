@@ -21,8 +21,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    void* CPU = initialize_CPU();
-    void* cartridge = intialize_cartridge(file);
+    cpu_t* CPU = initialize_CPU();
+    cartridge_t* cartridge = intialize_cartridge(file);
     boot_sequence(CPU, cartridge);
 
 
