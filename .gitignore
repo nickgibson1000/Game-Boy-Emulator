@@ -34,3 +34,9 @@ Release/
 # Operating System generated files
 .DS_Store
 Thumbs.db
+
+# Cmake files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile

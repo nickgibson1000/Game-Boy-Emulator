@@ -7,8 +7,9 @@
 #include <string.h>
 #include <SDL2/SDL.h>
 
-#include "cpu.h"
+// Forward declaration of cpu_t
+typedef struct cpu cpu_t;
 
-void write_audio_registers(void* CPU_HANDLE, uint16_t address, uint8_t value);
+void write_audio_registers(cpu_t* CPU, uint16_t address, uint8_t value);
 
 #endif // AUDIO_H

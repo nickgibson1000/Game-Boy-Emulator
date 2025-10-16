@@ -29,7 +29,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     // Set our program counter to memory address 0x00
     CPU->PC = 0x0100; // Execution starts here
     CPU->SP = 0xFFFE; // Top of stack
-    CPU->A = 0x0000; // Register A is set to 0
+    CPU->A = 0x0000;  // Register A is set to 0
     
 
     // Intialize VRAM section of memory to 0
@@ -72,9 +72,6 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     load_logo_to_VRAM(CPU, cartridge);
 
     
-
-
-
 
     // Nintendo logo bitmap
     uint8_t logo[48] = {
@@ -399,5 +396,67 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
 
 void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 {
-    
+    // Jump to the start of the cartridge header
+    uint16_t offset = 0x0104;
+    int result = fseek(cartridge->file, offset, SEEK_SET);
+
+    if(result != 0)
+    {
+        fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
+        exit(-1);
+    }
+
+    // Holds the catridge header
+    uint8_t logo_buffer[48];
+
+    size_t bytes_to_read = sizeof(logo_buffer); 
+    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge->file);
+
+
+    if (bytes_read < bytes_to_read) 
+    {
+        if (feof(cartridge->file)) 
+        {
+            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
+        } 
+        else if (ferror(cartridge->file)) 
+        {
+            fprintf(stderr, "Error reading cartridge header.\n");
+        }
+    }
+
+    // Start loading the logo data into VRAM at 0x8010
+    for(int i = 0; i < sizeof(logo_buffer); i++)
+    {
+
+    }
+
+
+
+
+
+
+
+
+    // Reset file pointer to beginning of the cartrdige
+    // in preperation for future reads
+    rewind(cartridge->file);
+}
+
+
+// Shift a byte of data circularly left
+uint8_t* left_shift_byte(uint8_t* value)
+{
+    uint8_t value_msb = ((*value) & 0x80) >> 7; // Move bit 7 to position 0
+    (*value) = ((*value) << 1) | value_msb;     // Rotate left
+    return value;
+}
+
+
+// Shift a byte of data circularly right
+uint8_t* right_shift_byte(uint8_t* value)
+{
+    uint8_t value_msb = ((*value *0x1)) << 7; // Move bit 0 to position 7
+    (*value) = ((*value) >> 1) | value_msb;   // Rotate right
+    return value;
 }

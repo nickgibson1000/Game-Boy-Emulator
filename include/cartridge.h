@@ -7,7 +7,6 @@
 #include <string.h>
 
 
-
 typedef struct {
     char filename[256];
     FILE* file;
