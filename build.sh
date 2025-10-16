@@ -8,3 +8,5 @@ cd build
 # Generate build system and compile
 cmake ..
 cmake --build .
+
+rm -rf build

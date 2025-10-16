@@ -103,33 +103,13 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
 
 
     // Jump to the start of the cartridge header
-    uint16_t offset = 0x0104;
-    int result = fseek(cartridge->file, offset, SEEK_SET);
-
-    if(result != 0)
-    {
-        fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
-        exit(-1);
-    }
+    uint16_t logo_offset = 0x0104;
 
     // Holds the catridge header
     uint8_t logo_buffer[48];
 
-    size_t bytes_to_read = sizeof(logo_buffer); 
-    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge->file);
-
-
-    if (bytes_read < bytes_to_read) 
-    {
-        if (feof(cartridge->file)) 
-        {
-            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
-        } 
-        else if (ferror(cartridge->file)) 
-        {
-            fprintf(stderr, "Error reading cartridge header.\n");
-        }
-    }
+    // This will read in the logo stored in the cartridges header starting at 0x0104
+    read_in_buffer(logo_buffer, sizeof(logo_buffer), logo_offset, cartridge->file);
 
     // Compare the header of the cartridge with the systems expected header
     for(int i = 0; i < sizeof(logo_buffer); i++)
@@ -149,23 +129,10 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
 
 
     // Checksum is from 0x0134 - 0x014C (24 bytes)
+    uint16_t checksum_offset = 0x0134;
     uint8_t checksum_buffer[25];
 
-    bytes_to_read = sizeof(checksum_buffer); 
-    bytes_read = fread(checksum_buffer, 1, bytes_to_read, cartridge->file);
-
-    if (bytes_read < bytes_to_read) 
-    {
-        if (feof(cartridge->file)) 
-        {
-            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
-        } 
-        else if (ferror(cartridge->file)) 
-        {
-            fprintf(stderr, "Error reading cartridge header.\n");
-        }
-        exit(-1);
-    }
+    read_in_buffer(checksum_buffer, sizeof(checksum_buffer), checksum_offset, cartridge->file);
 
     uint8_t checksum = 0;
 
@@ -185,6 +152,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
 
     // Read the actual checksum byte from ROM
     uint8_t expected_checksum;
+    fseek(cartridge->file, 0x014D,SEEK_SET);
     fread(&expected_checksum, 1, 1, cartridge->file);
     
     // DEBUG: Print the expected checksum value
@@ -394,36 +362,25 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
     CPU->bg_palette_mapping[3] = (value >> 6) & 0x03;
 }
 
+
+
+
+
+
+
+
 void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 {
     // Jump to the start of the cartridge header
     uint16_t offset = 0x0104;
-    int result = fseek(cartridge->file, offset, SEEK_SET);
-
-    if(result != 0)
-    {
-        fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
-        exit(-1);
-    }
 
     // Holds the catridge header
     uint8_t logo_buffer[48];
 
-    size_t bytes_to_read = sizeof(logo_buffer); 
-    size_t bytes_read = fread(logo_buffer, 1, bytes_to_read, cartridge->file);
 
-
-    if (bytes_read < bytes_to_read) 
-    {
-        if (feof(cartridge->file)) 
-        {
-            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
-        } 
-        else if (ferror(cartridge->file)) 
-        {
-            fprintf(stderr, "Error reading cartridge header.\n");
-        }
-    }
+    // This will read in the logo contents in the cartridge header
+    // into the buffer. The logo starts at 0x0104
+    read_in_buffer(logo_buffer, sizeof(logo_buffer), offset, cartridge->file);
 
     // Start loading the logo data into VRAM at 0x8010
     for(int i = 0; i < sizeof(logo_buffer); i++)
@@ -436,11 +393,6 @@ void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 
 
 
-
-
-    // Reset file pointer to beginning of the cartrdige
-    // in preperation for future reads
-    rewind(cartridge->file);
 }
 
 
@@ -459,4 +411,39 @@ uint8_t* right_shift_byte(uint8_t* value)
     uint8_t value_msb = ((*value *0x1)) << 7; // Move bit 0 to position 7
     (*value) = ((*value) >> 1) | value_msb;   // Rotate right
     return value;
+}
+
+
+// This function reads data into a buffer, at a specified byte offset in the passed in file
+void read_in_buffer(uint8_t* buffer, size_t buffer_size, uint16_t offset, FILE* file)
+{
+
+    // Jump to offset
+    int result = fseek(file, offset, SEEK_SET);
+
+    if(result != 0)
+    {
+        fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
+        exit(-1);
+    }
+
+    size_t bytes_to_read = buffer_size; 
+    size_t bytes_read = fread(buffer, 1, bytes_to_read, file);
+
+
+    if (bytes_read < bytes_to_read) 
+    {
+        if (feof(file)) 
+        {
+            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
+        } 
+        else if (ferror(file)) 
+        {
+            fprintf(stderr, "Error reading cartridge header.\n");
+        }
+    }
+
+    // Reset file pointer to beginning of the cartrdige
+    // in preperation for future reads
+    rewind(file);
 }
