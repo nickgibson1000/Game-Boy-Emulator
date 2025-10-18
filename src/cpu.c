@@ -372,11 +372,13 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
 void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 {
     // Jump to the start of the cartridge header
-    uint16_t offset = 0x0104;
+    uint16_t offset = 0x0104; // DE
+
+    // Start of area in VRAM containing logo
+    CPU->HL = 0x8010;
 
     // Holds the catridge header
     uint8_t logo_buffer[48];
-
 
     // This will read in the logo contents in the cartridge header
     // into the buffer. The logo starts at 0x0104
@@ -385,32 +387,77 @@ void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
     // Start loading the logo data into VRAM at 0x8010
     for(int i = 0; i < sizeof(logo_buffer); i++)
     {
+        CPU->A = logo_buffer[i];
+        CPU->C = CPU->A;
 
+        // Loop counter inside subroutine
+        CPU->B = 0x04;
+
+        while(CPU->B != 0)
+        {
+
+            uint8_t old_C = CPU->C;
+
+
+            rotate_left_carry(CPU, &CPU->C);
+            rotate_left_carry(CPU, &CPU->A);
+
+            // Restore original value of C
+            CPU->C = old_C;
+            rotate_left_carry(CPU, &CPU->C);
+            rotate_left_carry(CPU, &CPU->A);
+
+            CPU->B--;
+        }
+
+        CPU->memory[CPU->HL++] = CPU->A;
+        CPU->HL++; // Increment HL again
+        CPU->memory[CPU->HL++] = CPU->A;
+        CPU->HL++;
     }
+}
 
+// Takes msb in value and stores into carry flag (register F bit 4)
+// then left shifts value by 1
+void rotate_left_carry(cpu_t* CPU, uint8_t* value)
+{
 
+    // Extract the old carry flag bit
+    // Should be 0 since this is the first time
+    // the carry flag is used in reg F in the boot ROM
+    uint8_t old_carry = (CPU->F >> 4) & 0x01;
 
+    uint8_t new_carry = ((*value) & 0x80) >> 7;
 
+    // Update the carry flag
+    CPU->F = (CPU->F & ~(1 << 4)) | (new_carry << 4);
 
+    // Preform rotation
+    *value = ((*value) << 1) | old_carry;
+}
 
+void rotate_right_carry(cpu_t* CPU, uint8_t* value)
+{
+    // Todo: Implement
+    return 0;
 }
 
 
 // Shift a byte of data circularly left
-uint8_t* left_shift_byte(uint8_t* value)
+uint8_t left_shift_byte(uint8_t* value)
 {
     uint8_t value_msb = ((*value) & 0x80) >> 7; // Move bit 7 to position 0
     (*value) = ((*value) << 1) | value_msb;     // Rotate left
-    return value;
+    return value_msb;
 }
 
 
 // Shift a byte of data circularly right
-uint8_t* right_shift_byte(uint8_t* value)
+uint8_t right_shift_byte(uint8_t* value)
 {
     uint8_t value_msb = ((*value *0x1)) << 7; // Move bit 0 to position 7
     (*value) = ((*value) >> 1) | value_msb;   // Rotate right
-    return value;
+    return value_msb;
 }
 
 
