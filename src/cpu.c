@@ -71,6 +71,10 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     // high emualtion accuracy, we will keep them seperate for now
     load_logo_to_VRAM(CPU, cartridge);
 
+
+    // Load copyright tile into VRAM aswell
+    load_copyright_tile_to_VRAM(CPU, cartridge);
+
     
 
     // Nintendo logo bitmap
@@ -365,10 +369,6 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
 
 
 
-
-
-
-
 void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 {
     // Jump to the start of the cartridge header
@@ -417,6 +417,28 @@ void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
     }
 }
 
+
+void load_copyright_tile_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
+{
+    uint8_t offset = 0x00D8;
+    CPU->DE = offset;
+
+    CPU->B = 0x08;
+
+    uint8_t tilemap[8];
+    read_in_buffer(tilemap, sizeof(tilemap), CPU->DE, cartridge->file);
+
+    for(int i = 0; i < CPU->B; i++)
+    {
+        // This uses HL from the previous loading of the logo to VRAM
+        // A possible source of
+        CPU->memory[CPU->HL++] = tilemap[i];
+    }
+}
+
+
+
+
 // Takes msb in value and stores into carry flag (register F bit 4)
 // then left shifts value by 1
 void rotate_left_carry(cpu_t* CPU, uint8_t* value)
@@ -439,7 +461,6 @@ void rotate_left_carry(cpu_t* CPU, uint8_t* value)
 void rotate_right_carry(cpu_t* CPU, uint8_t* value)
 {
     // Todo: Implement
-    return 0;
 }
 
 
