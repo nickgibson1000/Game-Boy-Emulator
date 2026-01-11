@@ -23,7 +23,7 @@ cpu_t* initialize_CPU()
  that intializes hardware, displays the Nintendo logo with a sound and verifies the
  inserted cartridge.
 */
-int boot_sequence(cpu_t* CPU, cartridge_t* cartridge) 
+int boot_sequence(cpu_t *CPU, cartridge_t *cartridge) 
 {
     
     // Set our program counter to memory address 0x00
@@ -73,7 +73,68 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
 
 
     // Load copyright tile into VRAM aswell
-    load_copyright_tile_to_VRAM(CPU, cartridge);
+    load_copyright_tile_to_VRAM(CPU, cartridge->rom);
+
+
+
+
+
+
+
+
+
+
+    // Setup the tilemap in VRAM
+    CPU->A = 0x19;
+    CPU->memory[0x9910] = CPU->A;
+
+    // Pointer to 
+    CPU->HL = 0x992F;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
 
@@ -113,7 +174,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     uint8_t logo_buffer[48];
 
     // This will read in the logo stored in the cartridges header starting at 0x0104
-    read_in_buffer(logo_buffer, sizeof(logo_buffer), logo_offset, cartridge->file);
+    read_in_buffer(logo_buffer, sizeof(logo_buffer), logo_offset, cartridge->rom);
 
     // Compare the header of the cartridge with the systems expected header
     for(int i = 0; i < sizeof(logo_buffer); i++)
@@ -136,7 +197,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     uint16_t checksum_offset = 0x0134;
     uint8_t checksum_buffer[25];
 
-    read_in_buffer(checksum_buffer, sizeof(checksum_buffer), checksum_offset, cartridge->file);
+    read_in_buffer(checksum_buffer, sizeof(checksum_buffer), checksum_offset, cartridge->rom);
 
     uint8_t checksum = 0;
 
@@ -145,7 +206,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     {
 
         checksum = checksum - checksum_buffer[i] - 1;
-        fprintf(stdout, "%02X ", checksum_buffer[i]);
+        //fprintf(stdout, "%02X ", checksum_buffer[i]);
     }
 
     printf("\n");
@@ -155,9 +216,7 @@ int boot_sequence(cpu_t* CPU, cartridge_t* cartridge)
     //fprintf(stdout, "\n%02X \n", checksum);
 
     // Read the actual checksum byte from ROM
-    uint8_t expected_checksum;
-    fseek(cartridge->file, 0x014D,SEEK_SET);
-    fread(&expected_checksum, 1, 1, cartridge->file);
+    uint8_t expected_checksum = cartridge->rom[0x014D];
     
     // DEBUG: Print the expected checksum value
     //fprintf(stdout, "%02x", stored_checksum);
@@ -369,7 +428,7 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value)
 
 
 
-void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
+void load_logo_to_VRAM(cpu_t *CPU, cartridge_t *cartridge)
 {
     // Jump to the start of the cartridge header
     uint16_t offset = 0x0104; // DE
@@ -382,7 +441,7 @@ void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 
     // This will read in the logo contents in the cartridge header
     // into the buffer. The logo starts at 0x0104
-    read_in_buffer(logo_buffer, sizeof(logo_buffer), offset, cartridge->file);
+    read_in_buffer(logo_buffer, sizeof(logo_buffer), offset, cartridge->rom);
 
     // Start loading the logo data into VRAM at 0x8010
     for(int i = 0; i < sizeof(logo_buffer); i++)
@@ -418,7 +477,7 @@ void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
 }
 
 
-void load_copyright_tile_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
+void load_copyright_tile_to_VRAM(cpu_t *CPU, uint8_t *rom)
 {
     uint8_t offset = 0x00D8;
     CPU->DE = offset;
@@ -426,12 +485,12 @@ void load_copyright_tile_to_VRAM(cpu_t* CPU, cartridge_t* cartridge)
     CPU->B = 0x08;
 
     uint8_t tilemap[8];
-    read_in_buffer(tilemap, sizeof(tilemap), CPU->DE, cartridge->file);
+    read_in_buffer(tilemap, sizeof(tilemap), CPU->DE, rom);
 
     for(int i = 0; i < CPU->B; i++)
     {
         // This uses HL from the previous loading of the logo to VRAM
-        // A possible source of
+        // A possible source of error?
         CPU->memory[CPU->HL++] = tilemap[i];
     }
 }
@@ -483,35 +542,45 @@ uint8_t right_shift_byte(uint8_t* value)
 
 
 // This function reads data into a buffer, at a specified byte offset in the passed in file
-void read_in_buffer(uint8_t* buffer, size_t buffer_size, uint16_t offset, FILE* file)
+void read_in_buffer(uint8_t* buffer, size_t buffer_size, uint16_t offset, uint8_t* rom)
 {
+//
+    //// Jump to offset
+    //int result = fseek(rom, offset, SEEK_SET);
+//
+    //if(result != 0)
+    //{
+    //    fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
+    //    exit(-1);
+    //}
+//
+    //size_t bytes_to_read = buffer_size; 
+    //size_t bytes_read = fread(buffer, 1, bytes_to_read, rom);
+//
+//
+    //if (bytes_read < bytes_to_read) 
+    //{
+    //    if (feof(rom)) 
+    //    {
+    //        fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
+    //    } 
+    //    else if (ferror(rom)) 
+    //    {
+    //        fprintf(stderr, "Error reading cartridge header.\n");
+    //    }
+    //}
+//
+    //// Reset file pointer to beginning of the cartrdige
+    //// in preperation for future reads
+    //rewind(rom);
 
-    // Jump to offset
-    int result = fseek(file, offset, SEEK_SET);
 
-    if(result != 0)
+    // ISSUE HERE IN THIS CHECK
+    if (offset + buffer_size >= sizeof(rom))
     {
-        fprintf(stderr, "Failed to jump to offset %d in cartridge\n", offset);
-        exit(-1);
+        fprintf(stderr, "ROM read out of bounds\n");
+        exit(EXIT_FAILURE);
     }
 
-    size_t bytes_to_read = buffer_size; 
-    size_t bytes_read = fread(buffer, 1, bytes_to_read, file);
-
-
-    if (bytes_read < bytes_to_read) 
-    {
-        if (feof(file)) 
-        {
-            fprintf(stderr,"Stopped reading cartridge header prematurely.\n");
-        } 
-        else if (ferror(file)) 
-        {
-            fprintf(stderr, "Error reading cartridge header.\n");
-        }
-    }
-
-    // Reset file pointer to beginning of the cartrdige
-    // in preperation for future reads
-    rewind(file);
+    memcpy(buffer, rom + offset, buffer_size);
 }

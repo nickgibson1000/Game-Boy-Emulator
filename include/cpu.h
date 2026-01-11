@@ -24,8 +24,8 @@ void update_bg_palette_reg(cpu_t* CPU, uint16_t address, uint8_t value);
 void load_logo_to_VRAM(cpu_t* CPU, cartridge_t* cartridge);
 uint8_t left_shift_byte(uint8_t* value);
 uint8_t right_shift_byte(uint8_t* value);
-void read_in_buffer(uint8_t* buffer, size_t buffer_size, uint16_t offset, FILE* file);
-void load_copyright_tile_to_VRAM(CPU, cartridge);
+void read_in_buffer(uint8_t* buffer, size_t buffer_size, uint16_t offset, uint8_t *rom);
+void load_copyright_tile_to_VRAM(cpu_t *CPU, uint8_t *rom);
 
 
 void rotate_left_carry(cpu_t* CPU, uint8_t* value);

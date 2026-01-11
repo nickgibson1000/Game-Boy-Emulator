@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include "../include/cpu.h"
-#include "../include/cartridge.h"
+#include "../include/emulator.h"
 
 
 
@@ -21,9 +20,20 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    cpu_t* CPU = initialize_CPU();
-    cartridge_t* cartridge = intialize_cartridge(file);
-    boot_sequence(CPU, cartridge);
+    // Store the rom file as a uint buffer
+    fseek(file, 0, SEEK_END);
+    size_t size = ftell(file);
+    rewind(file);
+
+    
+    uint8_t *rom = malloc(size);
+    fread(rom, 1, size, file);
+    fclose(file);
+
+
+
+    Emulator_t *emu = emulator_create(rom);
+    emulator_run(emu);
 
 
     return 0;

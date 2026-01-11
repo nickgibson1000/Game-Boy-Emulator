@@ -1,6 +1,6 @@
 #include "../include/cartridge.h"
 
-cartridge_t* intialize_cartridge(FILE* cartridge_file)
+cartridge_t* initialize_cartridge(uint8_t *rom)
 {
     cartridge_t* cartridge = malloc(sizeof(cartridge_t));
     if(cartridge == NULL)
@@ -12,7 +12,7 @@ cartridge_t* intialize_cartridge(FILE* cartridge_file)
     // Intialize everything in the struct to 0
     memset(cartridge, 0, sizeof(cartridge_t));
 
-    cartridge->file = cartridge_file;
+    cartridge->rom = rom;
 
     return cartridge;
 }
